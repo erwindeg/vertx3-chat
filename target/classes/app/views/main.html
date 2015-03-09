@@ -1,0 +1,18 @@
+
+
+	<div ng-controller="MainCtrl">
+
+		<select ng-model="selected"
+			ng-options="message.text as message.name + ': ' + message.text for message in messages | orderBy:'date':true"
+			multiple size="20" style="min-width: 90%;"></select>
+		<form ng-submit="sendMessage()">
+			<input type="text" ng-model="message.name"
+				placeholder="Type your name here" /> <input type="text"
+				ng-model="message.text" placeholder="Type your message here" /> <input
+				type="submit" value="Send" />
+		</form>
+
+	</div>
+
+
+
