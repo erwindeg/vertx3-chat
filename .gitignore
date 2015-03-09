@@ -9,5 +9,6 @@
 .gradle/
 build/
 target/
+target\
 
 mods/
