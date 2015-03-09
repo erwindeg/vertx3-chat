@@ -1,10 +1,13 @@
 package nl.sogeti;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Vertx;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.mongo.MongoService;
+import io.vertx.ext.mongo.MongoServiceVerticle;
 import io.vertx.ext.sockjs.BridgeOptions;
 import io.vertx.ext.sockjs.SockJSServer;
 import io.vertx.ext.sockjs.SockJSServerOptions;
@@ -17,12 +20,21 @@ public class MainVerticle extends AbstractVerticle {
 
     @Override
     public void start() throws Exception {
-	HttpServer server = Vertx.vertx().createHttpServer().requestHandler(req -> getRouteMatcher().accept(req));
+	setUpMongo();
+	HttpServer server = vertx.createHttpServer(new HttpServerOptions().setPort(8080)).requestHandler(req -> getRouteMatcher().accept(req));
 
 	SockJSServer.sockJSServer(vertx, server).bridge(new SockJSServerOptions().setPrefix("/eventbus"),
 		new BridgeOptions().addInboundPermitted(new JsonObject()).addOutboundPermitted(new JsonObject()));
 
-	server.listen(8080);
+	MongoService proxy = MongoService.createEventBusProxy(vertx, "vertx.mongo");
+	vertx.eventBus().consumer("chat", m -> proxy.save("messages", new JsonObject(m.body().toString()), res -> System.out.println(res.result())));
+
+	server.listen();
+    }
+
+    private void setUpMongo() {
+	DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put("address", "vertx.mongo"));
+	vertx.deployVerticle(new MongoServiceVerticle(), options, res -> System.out.println(res.result()));
     }
 
     private RouteMatcher getRouteMatcher() {
