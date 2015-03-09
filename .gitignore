@@ -5,7 +5,7 @@
 .classpath
 .project
 .settings/
-
+.vertx
 .gradle/
 build/
 target/
