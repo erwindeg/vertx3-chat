@@ -25,13 +25,14 @@ public class MainVerticle extends AbstractVerticle {
     private static final String welcomePage = "index.html";
     private final String channel = UUID.randomUUID().toString();
     MongoService proxy;
+    private static final String MONGO_ADDRESS = "vertx.mongo1";
 
     @Override
     public void start() throws Exception {
 	proxy = setUpMongo();
 	RouteMatcher matcher = getRouteMatcher();
 	vertx.eventBus().consumer("chat", this::saveMessages);
-	vertx.eventBus().consumer(channel, this::saveMessages);
+	vertx.eventBus().consumer(this.channel, this::saveMessages);
 	vertx.eventBus().consumer("history", m -> proxy.find("messages", new JsonObject(), res -> sendMessages(((JsonObject) m.body()).getString("channel"), res)));
 	matcher.matchMethod(HttpMethod.GET, "/api/history", req -> proxy.find("messages", new JsonObject(), res -> req.response().end(new JsonArray(res.result()).toString())));
 
@@ -39,18 +40,23 @@ public class MainVerticle extends AbstractVerticle {
     }
 
     private void saveMessages(Message message) {
-	proxy.save("messages", new JsonObject(message.body().toString()), res -> System.out.println(res.result()));
+	System.out.println("Saving message: "+message);
+	proxy.save("messages", new JsonObject(message.body().toString()), res -> System.out.println(res.result()));	
     }
 
     private void sendMessages(String channel, AsyncResult<List<JsonObject>> result) {
-	
-	for (JsonObject message : result.result()) {
-	    vertx.eventBus().send(channel, message);
-	}
+	System.out.println("received history request for channel: "+channel);
+	if(!this.channel.equals(channel)){
+	    for (JsonObject message : result.result()) {
+		    System.out.println("sending message: "+message);
+		    vertx.eventBus().send(channel, message);
+		}    
+	}	
     }
 
     private void sendHistoryRequest(AsyncResult<String> result) {
-	vertx.eventBus().publish("history", new JsonObject().put("channel", channel));
+	System.out.println("send history request for channel: "+this.channel);
+	vertx.eventBus().publish("history", new JsonObject().put("channel", this.channel));
     }
 
     private HttpServer setUpServer(RouteMatcher matcher) {
@@ -62,9 +68,9 @@ public class MainVerticle extends AbstractVerticle {
     }
 
     private MongoService setUpMongo() {
-	DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put("address", "vertx.mongo"));
+	DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put("address", MONGO_ADDRESS));
 	vertx.deployVerticle(new MongoServiceVerticle(), options, this::sendHistoryRequest);
-	return MongoService.createEventBusProxy(vertx, "vertx.mongo");
+	return MongoService.createEventBusProxy(vertx, MONGO_ADDRESS);
     }
 
     private RouteMatcher getRouteMatcher() {
