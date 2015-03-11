@@ -25,7 +25,7 @@ public class MainVerticle extends AbstractVerticle {
     private static final String welcomePage = "index.html";
     private final String channel = UUID.randomUUID().toString();
     MongoService proxy;
-    private static final String MONGO_ADDRESS = "vertx.mongo";
+    private static final String MONGO_ADDRESS = UUID.randomUUID().toString();
 
     @Override
     public void start() throws Exception {
@@ -49,7 +49,7 @@ public class MainVerticle extends AbstractVerticle {
 	if(!this.channel.equals(channel)){
 	    for (JsonObject message : result.result()) {
 		    System.out.println("sending message: "+message);
-		    message.remove("_id");
+//		    message.remove("_id");
 		    vertx.eventBus().send(channel, message);
 		}    
 	}	
