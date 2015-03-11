@@ -25,7 +25,7 @@ public class MainVerticle extends AbstractVerticle {
     private static final String welcomePage = "index.html";
     private final String channel = UUID.randomUUID().toString();
     MongoService proxy;
-    private static final String MONGO_ADDRESS = "vertx.mongo1";
+    private static final String MONGO_ADDRESS = "vertx.mongo2";
 
     @Override
     public void start() throws Exception {
@@ -40,8 +40,8 @@ public class MainVerticle extends AbstractVerticle {
     }
 
     private void saveMessages(Message message) {
-	System.out.println("Saving message: "+message);
-	proxy.save("messages", new JsonObject(message.body().toString()), res -> System.out.println(res.result()));	
+	System.out.println("Saving message: "+message.body().toString());
+	proxy.save("messages", new JsonObject(message.body().toString()), res -> res.cause().printStackTrace());	
     }
 
     private void sendMessages(String channel, AsyncResult<List<JsonObject>> result) {
