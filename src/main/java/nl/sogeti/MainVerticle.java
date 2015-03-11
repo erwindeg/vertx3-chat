@@ -41,7 +41,7 @@ public class MainVerticle extends AbstractVerticle {
 
     private void saveMessages(Message message) {
 	System.out.println("Saving message: "+message.body().toString());
-	proxy.save("messages", new JsonObject(message.body().toString()), res -> System.out.println(res.succeeded()));	
+	proxy.insert("messages", new JsonObject(message.body().toString()), res -> System.out.println(res.succeeded()));
     }
 
     private void sendMessages(String channel, AsyncResult<List<JsonObject>> result) {
@@ -49,7 +49,6 @@ public class MainVerticle extends AbstractVerticle {
 	if(!this.channel.equals(channel)){
 	    for (JsonObject message : result.result()) {
 		    System.out.println("sending message: "+message);
-//		    message.remove("_id");
 		    vertx.eventBus().send(channel, message);
 		}    
 	}	
