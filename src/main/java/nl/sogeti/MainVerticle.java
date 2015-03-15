@@ -60,7 +60,7 @@ public class MainVerticle extends AbstractVerticle {
     }
 
     private HttpServer setUpServer(RouteMatcher matcher) {
-	HttpServer server = vertx.createHttpServer(new HttpServerOptions().setPort(9080)).requestHandler(req -> matcher.accept(req));
+	HttpServer server = vertx.createHttpServer(new HttpServerOptions().setPort(8080)).requestHandler(req -> matcher.accept(req));
 	SockJSServer.sockJSServer(vertx, server).bridge(new SockJSServerOptions().setPrefix("/eventbus"),
 		new BridgeOptions().addInboundPermitted(new JsonObject()).addOutboundPermitted(new JsonObject()));
 	return server;
