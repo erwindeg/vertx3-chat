@@ -6,7 +6,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 
 	<properties>
-		<vertx.version>3.0.0-SNAPSHOT</vertx.version>
+		<vertx.version>3.0.0-milestone3</vertx.version>
 	</properties>
 
 	<dependencies>
@@ -19,7 +19,7 @@
 		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-sockjs</artifactId>
-			<version>${vertx.version}</version>
+			<version>3.0.0-milestone2</version>
 		</dependency>
 		<dependency>
 			<groupId>io.vertx</groupId>
@@ -31,12 +31,12 @@
 			<artifactId>vertx-unit</artifactId>
 			<version>${vertx.version}</version>
 		</dependency>
-		
+
 		<dependency>
-	<groupId>junit</groupId>
-	<artifactId>junit</artifactId>
-	<version>4.11</version>
-</dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+		</dependency>
 
 
 		<dependency>
