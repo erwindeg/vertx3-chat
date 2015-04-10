@@ -21,61 +21,71 @@ import java.util.UUID;
 
 public class MainVerticle extends AbstractVerticle {
 
-    private static final String PATH = "app";
-    private static final String welcomePage = "index.html";
-    private final String channel = UUID.randomUUID().toString();
-    MongoService proxy;
-    private static final String MONGO_ADDRESS = UUID.randomUUID().toString();
+	private static final String PATH = "app";
+	private static final String welcomePage = "index.html";
+	private final String channel = UUID.randomUUID().toString();
+	MongoService proxy;
+	private static final String MONGO_ADDRESS = UUID.randomUUID().toString();
 
-    @Override
-    public void start() throws Exception {
-	proxy = setUpMongo();
-	RouteMatcher matcher = getRouteMatcher();
-	vertx.eventBus().consumer("chat", this::saveMessages);
-	vertx.eventBus().consumer(this.channel, this::saveMessages);
-	vertx.eventBus().consumer("history", m -> proxy.find("messages", new JsonObject(), res -> sendMessages(((JsonObject) m.body()).getString("channel"), res)));
-	matcher.matchMethod(HttpMethod.GET, "/api/history", req -> proxy.find("messages", new JsonObject(), res -> req.response().end(new JsonArray(res.result()).toString())));
+	@Override
+	public void start() throws Exception {
+		proxy = setUpMongo();
+		RouteMatcher matcher = getRouteMatcher();
+		vertx.eventBus().consumer("chat", this::saveMessages);
+		vertx.eventBus().consumer(this.channel, this::saveMessages);
+		vertx.eventBus().consumer(
+				"history",
+				m -> proxy.find("messages", new JsonObject(),
+						res -> sendMessages(((JsonObject) m.body()).getString("channel"), res)));
+		matcher.matchMethod(
+				HttpMethod.GET,
+				"/api/history",
+				req -> proxy.find("messages", new JsonObject(),
+						res -> req.response().end(new JsonArray(res.result()).toString())));
 
-	setUpServer(matcher).listen();
-    }
+		setUpServer(matcher).listen();
+	}
 
-    private void saveMessages(Message message) {
-	System.out.println("Saving message: "+message.body().toString());
-	proxy.insert("messages", new JsonObject(message.body().toString()), res -> System.out.println(res.succeeded()));
-    }
+	private void saveMessages(Message message) {
+		System.out.println("Saving message: " + message.body().toString());
+		proxy.insert("messages", new JsonObject(message.body().toString()), res -> System.out.println(res.succeeded()));
+	}
 
-    private void sendMessages(String channel, AsyncResult<List<JsonObject>> result) {
-	System.out.println("received history request for channel: "+channel);
-	if(!this.channel.equals(channel)){
-	    for (JsonObject message : result.result()) {
-		    System.out.println("sending message: "+message);
-		    vertx.eventBus().send(channel, message);
-		}    
-	}	
-    }
+	private void sendMessages(String channel, AsyncResult<List<JsonObject>> result) {
+		System.out.println("received history request for channel: " + channel);
+		if (!this.channel.equals(channel)) {
+			for (JsonObject message : result.result()) {
+				System.out.println("sending message: " + message);
+				vertx.eventBus().send(channel, message);
+			}
+		}
+	}
 
-    private void sendHistoryRequest(AsyncResult<String> result) {
-	System.out.println("send history request for channel: "+this.channel);
-	vertx.eventBus().publish("history", new JsonObject().put("channel", this.channel));
-    }
+	private void sendHistoryRequest(AsyncResult<String> result) {
+		System.out.println("send history request for channel: " + this.channel);
+		vertx.eventBus().publish("history", new JsonObject().put("channel", this.channel));
+	}
 
-    private HttpServer setUpServer(RouteMatcher matcher) {
-	HttpServer server = vertx.createHttpServer(new HttpServerOptions().setPort(8080)).requestHandler(req -> matcher.accept(req));
-	SockJSServer.sockJSServer(vertx, server).bridge(new SockJSServerOptions().setPrefix("/eventbus"),
-		new BridgeOptions().addInboundPermitted(new JsonObject()).addOutboundPermitted(new JsonObject()));
-	return server;
+	private HttpServer setUpServer(RouteMatcher matcher) {
+		HttpServer server = vertx.createHttpServer(new HttpServerOptions().setPort(8080)).requestHandler(
+				req -> matcher.accept(req));
+		SockJSServer.sockJSServer(vertx, server).bridge(new SockJSServerOptions().setPrefix("/eventbus"),
+				new BridgeOptions().addInboundPermitted(new JsonObject()).addOutboundPermitted(new JsonObject()));
+		return server;
 
-    }
+	}
 
-    private MongoService setUpMongo() {
-	DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put("address", MONGO_ADDRESS));
-	vertx.deployVerticle(new MongoServiceVerticle(), options, this::sendHistoryRequest);
-	return MongoService.createEventBusProxy(vertx, MONGO_ADDRESS);
-    }
+	private MongoService setUpMongo() {
+		DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put("address", MONGO_ADDRESS));
+		vertx.deployVerticle(new MongoServiceVerticle(), options, this::sendHistoryRequest);
+		return MongoService.createEventBusProxy(vertx, MONGO_ADDRESS);
+	}
 
-    private RouteMatcher getRouteMatcher() {
-	RouteMatcher matcher = RouteMatcher.routeMatcher().matchMethod(HttpMethod.GET, "/", req -> req.response().sendFile(PATH + "/" + welcomePage));
-	matcher.matchMethod(HttpMethod.GET, "^\\/" + PATH + "\\/.*", req -> req.response().sendFile(req.path().substring(1)));
-	return matcher;
-    }
+	private RouteMatcher getRouteMatcher() {
+		RouteMatcher matcher = RouteMatcher.routeMatcher().matchMethod(HttpMethod.GET, "/",
+				req -> req.response().sendFile(PATH + "/" + welcomePage));
+		matcher.matchMethod(HttpMethod.GET, "^\\/" + PATH + "\\/.*",
+				req -> req.response().sendFile(req.path().substring(1)));
+		return matcher;
+	}
 }

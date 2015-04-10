@@ -1,5 +1,8 @@
 <hazelcast>
   <network>
+	<!--<interfaces enabled="true">
+		<interface>192.168.173.1</interface>
+	</interfaces>-->
     <join>
       <multicast enabled="true"></multicast>
       <!--<tcp-ip enabled="true">

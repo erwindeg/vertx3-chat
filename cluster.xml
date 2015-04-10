@@ -1,0 +1,11 @@
+<hazelcast>
+  <network>
+    <join>
+      <multicast enabled="false"></multicast>
+      <tcp-ip enabled="true">
+        <member>132.229.130.147</member> 
+      </tcp-ip>
+    </join>
+  </network>
+
+</hazelcast>
